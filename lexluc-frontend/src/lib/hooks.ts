@@ -1,0 +1,180 @@
+'use client';
+
+import { useState, useCallback, useEffect } from 'react';
+
+/**
+ * Generic data fetching hook with loading, error, and empty states
+ */
+export function useFetch<T>(
+  fetcher: () => Promise<T>,
+  deps: any[] = []
+) {
+  const [data, setData] = useState<T | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetch = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await fetcher();
+      setData(result);
+    } catch (err: any) {
+      const errorMsg = err.message || 'An error occurred';
+      setError(errorMsg);
+      console.error('Fetch error:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [fetcher, ...deps]);
+
+  useEffect(() => {
+    fetch();
+  }, [fetch]);
+
+  const refetch = useCallback(() => fetch(), [fetch]);
+
+  return { data, loading, error, refetch };
+}
+
+/**
+ * Mutation hook for POST/PATCH/DELETE operations
+ */
+export function useMutation<TData, TRequest>(
+  mutator: (data: TRequest) => Promise<TData>
+) {
+  const [data, setData] = useState<TData | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const mutate = useCallback(
+    async (payload: TRequest) => {
+      try {
+        setLoading(true);
+        setError(null);
+        const result = await mutator(payload);
+        setData(result);
+        return result;
+      } catch (err: any) {
+        const errorMsg = err.message || 'An error occurred';
+        setError(errorMsg);
+        console.error('Mutation error:', err);
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [mutator]
+  );
+
+  const reset = useCallback(() => {
+    setData(null);
+    setError(null);
+  }, []);
+
+  return { data, loading, error, mutate, reset };
+}
+
+/**
+ * Toast notification management
+ */
+export type ToastType = 'success' | 'error' | 'info' | 'warning';
+
+export interface Toast {
+  id: string;
+  message: string;
+  type: ToastType;
+}
+
+let toastId = 0;
+const toastSubscribers = new Set<(toasts: Toast[]) => void>();
+let toasts: Toast[] = [];
+
+export function useToast() {
+  const [currentToasts, setCurrentToasts] = useState<Toast[]>([]);
+
+  useEffect(() => {
+    // Subscribe to toast changes
+    const subscriber = (newToasts: Toast[]) => {
+      setCurrentToasts(newToasts);
+    };
+    toastSubscribers.add(subscriber);
+
+    return () => {
+      toastSubscribers.delete(subscriber);
+    };
+  }, []);
+
+  const show = useCallback(
+    (message: string, type: ToastType = 'info', duration = 3000) => {
+      const id = String(toastId++);
+      const newToast: Toast = { id, message, type };
+      toasts = [...toasts, newToast];
+      toastSubscribers.forEach((sub) => sub(toasts));
+
+      if (duration > 0) {
+        setTimeout(() => {
+          toasts = toasts.filter((t) => t.id !== id);
+          toastSubscribers.forEach((sub) => sub(toasts));
+        }, duration);
+      }
+
+      return id;
+    },
+    []
+  );
+
+  const remove = useCallback((id: string) => {
+    toasts = toasts.filter((t) => t.id !== id);
+    toastSubscribers.forEach((sub) => sub(toasts));
+  }, []);
+
+  return {
+    toasts: currentToasts,
+    show,
+    remove,
+    success: (msg: string, duration?: number) => show(msg, 'success', duration),
+    error: (msg: string, duration?: number) => show(msg, 'error', duration),
+    info: (msg: string, duration?: number) => show(msg, 'info', duration),
+    warning: (msg: string, duration?: number) => show(msg, 'warning', duration),
+  };
+}
+
+/**
+ * Auth state management hook
+ */
+export function useAuth() {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [token, setToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Load user and token from localStorage on mount
+    if (typeof window !== 'undefined') {
+      const savedToken = localStorage.getItem('authToken');
+      const savedUser = localStorage.getItem('user');
+      
+      if (savedToken && savedUser) {
+        setToken(savedToken);
+        setUser(JSON.parse(savedUser));
+      }
+      setLoading(false);
+    }
+  }, []);
+
+  const login = useCallback((newToken: string, newUser: any) => {
+    localStorage.setItem('authToken', newToken);
+    localStorage.setItem('user', JSON.stringify(newUser));
+    setToken(newToken);
+    setUser(newUser);
+  }, []);
+
+  const logout = useCallback(() => {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('user');
+    setToken(null);
+    setUser(null);
+  }, []);
+
+  return { user, token, loading, login, logout, isAuthenticated: !!token };
+}

@@ -1,0 +1,325 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+enum UserRole {
+  SUPER_ADMIN
+  CONTENT_MANAGER
+  BOOKING_MANAGER
+  USER
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum ContactStatus {
+  NEW
+  READ
+  RESPONDED
+}
+
+// ============================================================================
+// USER & AUTHENTICATION
+// ============================================================================
+
+model User {
+  id        String   @id @default(uuid()) @db.Uuid
+  email     String   @unique
+  password  String
+  firstName String
+  lastName  String
+  phone     String?
+  role      UserRole @default(USER)
+  
+  // Relations
+  bookings      Booking[]
+  contactMessages ContactMessage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  @@index([email])
+  @@index([role])
+  @@map("users")
+}
+
+// ============================================================================
+// SERVICES (Company Services: Tourism, Agriculture, Mining, etc.)
+// ============================================================================
+
+model Service {
+  id          String  @id @default(uuid()) @db.Uuid
+  name        String  @unique
+  slug        String  @unique
+  description String  @db.Text
+  content     String? @db.Text
+  icon        String? // SVG or icon class
+  image       String? // Featured image URL
+  order       Int     @default(0)
+  isActive    Boolean @default(true)
+
+  // SEO
+  metaTitle       String?
+  metaDescription String?
+
+  // Relations
+  tours   Tour[]
+  media   Media[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime? // Soft delete
+
+  @@index([slug])
+  @@index([isActive])
+  @@map("services")
+}
+
+// ============================================================================
+// TOURS (Specific tour packages and destinations)
+// ============================================================================
+
+model Tour {
+  id            String   @id @default(uuid()) @db.Uuid
+  title         String
+  slug          String   @unique
+  description   String   @db.Text
+  content       String?  @db.Text
+  image         String?  // Featured image
+  destination   String
+  duration      Int      // In days
+  price         Decimal  @db.Decimal(10, 2)
+  maxParticipants Int?   // Null = unlimited
+  isActive      Boolean  @default(true)
+
+  // Details
+  highlights    String[] @default([]) // Array of highlights
+  inclusions    String[] @default([]) // What's included
+  exclusions    String[] @default([]) // What's not included
+  itinerary     String?  @db.Text
+
+  // Dates
+  startDate     DateTime?
+  endDate       DateTime?
+
+  // SEO
+  metaTitle       String?
+  metaDescription String?
+
+  // Relations
+  serviceId   String?  @db.Uuid
+  service     Service? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  bookings    Booking[]
+  media       Media[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime? // Soft delete
+
+  @@index([slug])
+  @@index([serviceId])
+  @@index([isActive])
+  @@map("tours")
+}
+
+// ============================================================================
+// BOOKINGS (Tour bookings from customers)
+// ============================================================================
+
+model Booking {
+  id            String         @id @default(uuid()) @db.Uuid
+  referenceNo   String         @unique @default(uuid())
+  
+  // Customer info
+  firstName     String
+  lastName      String
+  email         String
+  phone         String
+  
+  // Booking details
+  numberOfParticipants Int
+  totalPrice    Decimal        @db.Decimal(10, 2)
+  status        BookingStatus  @default(PENDING)
+  specialRequests String?       @db.Text
+  notes         String?        @db.Text
+
+  // Relations
+  userId        String?        @db.Uuid
+  user          User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  tourId        String         @db.Uuid
+  tour          Tour           @relation(fields: [tourId], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime? // Soft delete
+
+  @@index([referenceNo])
+  @@index([status])
+  @@index([tourId])
+  @@index([userId])
+  @@index([email])
+  @@map("bookings")
+}
+
+// ============================================================================
+// BLOG POSTS
+// ============================================================================
+
+model BlogPost {
+  id        String   @id @default(uuid()) @db.Uuid
+  title     String
+  slug      String   @unique
+  content   String   @db.Text
+  excerpt   String?
+  image     String?  // Featured image
+  category  String?
+  isPublished Boolean @default(false)
+  publishedAt DateTime?
+
+  // SEO
+  metaTitle       String?
+  metaDescription String?
+
+  // Relations
+  media     Media[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime? // Soft delete
+
+  @@index([slug])
+  @@index([isPublished])
+  @@index([publishedAt])
+  @@map("blog_posts")
+}
+
+// ============================================================================
+// CONTACT MESSAGES (Contact form submissions)
+// ============================================================================
+
+model ContactMessage {
+  id          String          @id @default(uuid()) @db.Uuid
+  firstName   String
+  lastName    String
+  email       String
+  phone       String?
+  company     String?
+  subject     String
+  message     String          @db.Text
+  status      ContactStatus   @default(NEW)
+  
+  // Admin response
+  response    String?         @db.Text
+  respondedAt DateTime?
+
+  // Relations
+  userId      String?         @db.Uuid
+  user        User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime? // Soft delete
+
+  @@index([email])
+  @@index([status])
+  @@index([userId])
+  @@map("contact_messages")
+}
+
+// ============================================================================
+// MEDIA (Images and files management)
+// ============================================================================
+
+model Media {
+  id        String  @id @default(uuid()) @db.Uuid
+  url       String
+  fileName  String
+  fileType  String  // MIME type
+  fileSize  Int
+  
+  // Relations (optional - can be attached to multiple entities)
+  tours     Tour[]
+  services  Service[]
+  blogPosts BlogPost[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime? // Soft delete
+
+  @@index([fileName])
+  @@map("media")
+}
+
+// ============================================================================
+// CASE STUDIES (For marketing content)
+// ============================================================================
+
+model CaseStudy {
+  id          String   @id @default(uuid()) @db.Uuid
+  title       String
+  slug        String   @unique
+  description String   @db.Text
+  content     String?  @db.Text
+  image       String?
+  client      String?
+  results     String?  @db.Text
+  isPublished Boolean  @default(false)
+
+  // SEO
+  metaTitle       String?
+  metaDescription String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  @@index([slug])
+  @@index([isPublished])
+  @@map("case_studies")
+}
+
+// ============================================================================
+// QUOTE REQUESTS (For sales inquiries)
+// ============================================================================
+
+model QuoteRequest {
+  id          String   @id @default(uuid()) @db.Uuid
+  firstName   String
+  lastName    String
+  email       String
+  phone       String
+  company     String?
+  service     String   // Service interested in
+  details     String   @db.Text
+  budget      String?
+  timeline    String?
+  status      String   @default("NEW") // NEW, QUOTED, NEGOTIATING, WON, LOST
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  @@index([email])
+  @@index([status])
+  @@index([service])
+  @@map("quote_requests")
+}
