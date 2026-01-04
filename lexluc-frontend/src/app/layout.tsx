@@ -17,7 +17,6 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: 'Lexluc Global Services and Tours Limited',
   description: 'Excellence in Tourism, Agriculture, Mining, Oil & Gas, Recreation, Transportation & Logistics',
-  charset: 'utf-8',
 };
 
 export const viewport: Viewport = {
