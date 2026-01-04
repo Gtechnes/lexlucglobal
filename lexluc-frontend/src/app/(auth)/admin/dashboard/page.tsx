@@ -27,9 +27,10 @@ export default function AdminDashboard() {
   const [error, setError] = useState('');
 
   // Memoize fetchers to prevent unnecessary re-rendering
-  const fetchStats = useCallback(async () => {
+  const fetchStats = useCallback(async (): Promise<DashboardStats> => {
     return adminAPI.getStats();
-  }, []);
+    }, []);
+
 
   const fetchBookings = useCallback(async () => {
     return bookingsAPI.getAll();
