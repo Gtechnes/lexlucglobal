@@ -14,9 +14,14 @@ export default function AdminContactsPage() {
   const [showReplyModal, setShowReplyModal] = useState(false);
   const [replyText, setReplyText] = useState('');
 
-  const replyMutation = useMutation((data) => 
-    contactsAPI.respond(selectedContact.id, data.response)
+  type ReplyPayload = {
+  response: string;
+  };
+
+  const replyMutation = useMutation((data: ReplyPayload) =>
+  contactsAPI.respond(selectedContact.id, data.response)
   );
+
 
   const handleMarkAsRead = async (id: string) => {
     try {
