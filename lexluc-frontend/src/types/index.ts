@@ -70,6 +70,7 @@ export interface Booking {
   referenceNo: string;
   firstName: string;
   lastName: string;
+  guestName?: string; // Full name for display
   email: string;
   phone: string;
   numberOfParticipants: number;
@@ -119,12 +120,14 @@ export interface ContactMessage {
   id: string;
   firstName: string;
   lastName: string;
+  name?: string; // Full name for display
   email: string;
   phone?: string;
   company?: string;
   subject: string;
   message: string;
   status: ContactStatus;
+  isRead?: boolean; // Convenience property
   response?: string;
   respondedAt?: string;
   createdAt: string;

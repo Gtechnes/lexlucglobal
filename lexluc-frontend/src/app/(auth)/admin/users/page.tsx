@@ -2,18 +2,28 @@
 
 import { useState, useEffect } from 'react';
 import { usersAPI } from '@/lib/api';
+import { User } from '@/types';
 import AdminModal from '@/components/admin/Modal';
 
+type UserRole = 'SUPER_ADMIN' | 'CONTENT_MANAGER' | 'BOOKING_MANAGER' | 'USER';
+
+interface CreateUserForm {
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: UserRole;
+}
+
 export default function AdminUsersPage() {
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<CreateUserForm>({
     email: '',
     firstName: '',
     lastName: '',
-    role: 'user',
+    role: 'USER',
   });
 
   useEffect(() => {
@@ -34,17 +44,14 @@ export default function AdminUsersPage() {
   };
 
   const handleAdd = () => {
-    setFormData({ email: '', firstName: '', lastName: '', role: 'user' });
+    setFormData({ email: '', firstName: '', lastName: '', role: 'USER' });
     setShowModal(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await usersAPI.create({
-        ...formData,
-        password: 'default123', // Default password - user should change it
-      });
+      await usersAPI.create(formData);
       setShowModal(false);
       loadUsers();
     } catch (err) {
@@ -166,13 +173,13 @@ export default function AdminUsersPage() {
               <label className="block text-sm font-medium text-gray-700 mb-2">Role</label>
               <select
                 value={formData.role}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               >
-                <option value="user">User</option>
-                <option value="booking_manager">Booking Manager</option>
-                <option value="content_manager">Content Manager</option>
-                <option value="super_admin">Super Admin</option>
+                <option value="USER">User</option>
+                <option value="BOOKING_MANAGER">Booking Manager</option>
+                <option value="CONTENT_MANAGER">Content Manager</option>
+                <option value="SUPER_ADMIN">Super Admin</option>
               </select>
             </div>
             <div className="flex gap-4 pt-4">

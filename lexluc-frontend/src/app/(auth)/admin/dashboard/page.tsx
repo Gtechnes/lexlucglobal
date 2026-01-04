@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { servicesAPI, toursAPI, bookingsAPI, contactsAPI, adminAPI } from '@/lib/api';
-import { DashboardStats } from '@/types';
+import { DashboardStats, Booking, ContactMessage } from '@/types';
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats>({
@@ -13,8 +13,8 @@ export default function AdminDashboard() {
     posts: 0,
     unreadContacts: 0,
   });
-  const [recentBookings, setRecentBookings] = useState<any[]>([]);
-  const [recentContacts, setRecentContacts] = useState<any[]>([]);
+  const [recentBookings, setRecentBookings] = useState<Booking[]>([]);
+  const [recentContacts, setRecentContacts] = useState<ContactMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -133,7 +133,7 @@ export default function AdminDashboard() {
                     </div>
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        booking.status === 'confirmed'
+                        booking.status === 'CONFIRMED'
                           ? 'bg-green-100 text-green-800'
                           : 'bg-yellow-100 text-yellow-800'
                       }`}

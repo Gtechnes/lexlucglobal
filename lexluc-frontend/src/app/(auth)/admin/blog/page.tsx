@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useFetch, useMutation, useToast } from '@/lib/hooks';
 import { blogAPI } from '@/lib/api';
 import { clearCache } from '@/lib/api';
+import { BlogPost } from '@/types';
 import { Button, Input, Textarea, Card, Badge } from '@/components/common/UI';
 import { ImageUpload } from '@/components/common/ImageUpload';
 import { Modal } from '@/components/common/UI';
@@ -16,7 +17,20 @@ export default function AdminBlogPage() {
 
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
+
+  interface FormData {
+    title: string;
+    slug: string;
+    content: string;
+    excerpt: string;
+    image: string;
+    category: string;
+    isPublished: boolean;
+    metaTitle: string;
+    metaDescription: string;
+  }
+
+  const [formData, setFormData] = useState<FormData>({
     title: '',
     slug: '',
     content: '',
@@ -28,8 +42,8 @@ export default function AdminBlogPage() {
     metaDescription: '',
   });
 
-  const createMutation = useMutation((data) => blogAPI.create(data));
-  const updateMutation = useMutation((data) => blogAPI.update(editingId!, data));
+  const createMutation = useMutation<BlogPost, typeof formData>((data) => blogAPI.create(data as Omit<BlogPost, 'id' | 'createdAt' | 'updatedAt'>));
+  const updateMutation = useMutation<BlogPost, Partial<typeof formData>>((data) => blogAPI.update(editingId!, data as Partial<Omit<BlogPost, 'id' | 'createdAt' | 'updatedAt'>>));
 
   const handleAdd = () => {
     setEditingId(null);
@@ -47,7 +61,7 @@ export default function AdminBlogPage() {
     setShowModal(true);
   };
 
-  const handleEdit = (post: any) => {
+  const handleEdit = (post: BlogPost) => {
     setEditingId(post.id);
     setFormData({
       title: post.title,

@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, DependencyList } from 'react';
 
 /**
  * Generic data fetching hook with loading, error, and empty states
  */
 export function useFetch<T>(
   fetcher: () => Promise<T>,
-  deps: any[] = []
+  deps: DependencyList = []
 ) {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
@@ -144,7 +144,7 @@ export function useToast() {
  * Auth state management hook
  */
 export function useAuth() {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<{ id: string; email: string; firstName: string; lastName: string; role: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState<string | null>(null);
 
@@ -156,13 +156,18 @@ export function useAuth() {
       
       if (savedToken && savedUser) {
         setToken(savedToken);
-        setUser(JSON.parse(savedUser));
+        try {
+          setUser(JSON.parse(savedUser));
+        } catch (e) {
+          console.error('Failed to parse stored user:', e);
+          setUser(null);
+        }
       }
       setLoading(false);
     }
   }, []);
 
-  const login = useCallback((newToken: string, newUser: any) => {
+  const login = useCallback((newToken: string, newUser: { id: string; email: string; firstName: string; lastName: string; role: string }) => {
     localStorage.setItem('authToken', newToken);
     localStorage.setItem('user', JSON.stringify(newUser));
     setToken(newToken);

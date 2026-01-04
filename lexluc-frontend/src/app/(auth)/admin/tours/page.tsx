@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useFetch, useMutation, useToast } from '@/lib/hooks';
 import { toursAPI } from '@/lib/api';
+import { Tour } from '@/types';
 import { Button, Input, Textarea, Table } from '@/components/common/UI';
 import { ImageUpload } from '@/components/common/ImageUpload';
 import { Modal } from '@/components/common/UI';
@@ -14,7 +15,29 @@ export default function AdminToursPage() {
 
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
+
+  interface FormData {
+    title: string;
+    slug: string;
+    description: string;
+    content: string;
+    destination: string;
+    duration: number;
+    price: number;
+    maxParticipants: number | null;
+    image: string;
+    highlights: string[];
+    inclusions: string[];
+    exclusions: string[];
+    itinerary: string;
+    startDate: string;
+    endDate: string;
+    isActive: boolean;
+    metaTitle: string;
+    metaDescription: string;
+  }
+
+  const [formData, setFormData] = useState<FormData>({
     title: '',
     slug: '',
     description: '',
@@ -24,9 +47,9 @@ export default function AdminToursPage() {
     price: 0,
     maxParticipants: null,
     image: '',
-    highlights: [] as string[],
-    inclusions: [] as string[],
-    exclusions: [] as string[],
+    highlights: [],
+    inclusions: [],
+    exclusions: [],
     itinerary: '',
     startDate: '',
     endDate: '',
@@ -35,8 +58,8 @@ export default function AdminToursPage() {
     metaDescription: '',
   });
 
-  const createMutation = useMutation((data) => toursAPI.create(data));
-  const updateMutation = useMutation((data) => toursAPI.update(editingId!, data));
+  const createMutation = useMutation<Tour, typeof formData>((data) => toursAPI.create(data as Omit<Tour, 'id' | 'createdAt' | 'updatedAt'>));
+  const updateMutation = useMutation<Tour, Partial<typeof formData>>((data) => toursAPI.update(editingId!, data as Partial<Omit<Tour, 'id' | 'createdAt' | 'updatedAt'>>));
 
   const handleAdd = () => {
     setEditingId(null);
@@ -63,7 +86,7 @@ export default function AdminToursPage() {
     setShowModal(true);
   };
 
-  const handleEdit = (tour: any) => {
+  const handleEdit = (tour: Tour) => {
     setEditingId(tour.id);
     setFormData({
       title: tour.title,
@@ -285,7 +308,7 @@ export default function AdminToursPage() {
 
           <ImageUpload
             label="Tour Image"
-            folder="lexluc/tours"
+            type="tour"
             preview={formData.image}
             onUpload={(url) => setFormData({ ...formData, image: url })}
           />

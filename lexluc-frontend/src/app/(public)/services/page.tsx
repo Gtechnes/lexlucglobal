@@ -49,7 +49,7 @@ export default function ServicesPage() {
 
           {!loading && !error && services.length > 0 && (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {services.map((service: any) => (
+              {services.map((service: typeof services[0]) => (
                 <Card key={service.id} className="p-8 flex flex-col">
                   {service.image && (
                     <img

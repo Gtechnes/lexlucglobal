@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useFetch, useMutation, useToast } from '@/lib/hooks';
 import { servicesAPI } from '@/lib/api';
+import { Service } from '@/types';
 import { Button, Input, Textarea, EmptyState, Table } from '@/components/common/UI';
 import { ImageUpload } from '@/components/common/ImageUpload';
 import { Modal } from '@/components/common/UI';
@@ -14,7 +15,21 @@ export default function AdminServicesPage() {
 
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
+
+  interface FormData {
+    name: string;
+    slug: string;
+    description: string;
+    content: string;
+    icon: string;
+    image: string;
+    order: number;
+    isActive: boolean;
+    metaTitle: string;
+    metaDescription: string;
+  }
+
+  const [formData, setFormData] = useState<FormData>({
     name: '',
     slug: '',
     description: '',
@@ -27,8 +42,8 @@ export default function AdminServicesPage() {
     metaDescription: '',
   });
 
-  const createMutation = useMutation((data) => servicesAPI.create(data));
-  const updateMutation = useMutation((data) => servicesAPI.update(editingId!, data));
+  const createMutation = useMutation<Service, typeof formData>((data) => servicesAPI.create(data as Omit<Service, 'id' | 'createdAt' | 'updatedAt'>));
+  const updateMutation = useMutation<Service, Partial<typeof formData>>((data) => servicesAPI.update(editingId!, data as Partial<Omit<Service, 'id' | 'createdAt' | 'updatedAt'>>));
 
   const handleAdd = () => {
     setEditingId(null);
@@ -47,7 +62,7 @@ export default function AdminServicesPage() {
     setShowModal(true);
   };
 
-  const handleEdit = (service: any) => {
+  const handleEdit = (service: Service) => {
     setEditingId(service.id);
     setFormData({
       name: service.name,

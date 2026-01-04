@@ -1,4 +1,17 @@
-import { AuthResponse, LoginCredentials, DashboardStats } from '@/types';
+import {
+  AuthResponse,
+  LoginCredentials,
+  DashboardStats,
+  Service,
+  Tour,
+  Booking,
+  BookingStatus,
+  CreateBookingRequest,
+  BlogPost,
+  ContactMessage,
+  CreateContactRequest,
+  User,
+} from '@/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
 
@@ -39,10 +52,18 @@ async function apiRequest<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const url = `${API_URL}${endpoint}`;
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...options.headers,
   };
+
+  // Merge existing headers
+  if (options.headers && typeof options.headers === 'object') {
+    Object.entries(options.headers).forEach(([key, value]) => {
+      if (typeof value === 'string') {
+        headers[key] = value;
+      }
+    });
+  }
 
   // Add auth token if available
   if (typeof window !== 'undefined') {
@@ -165,15 +186,16 @@ export function clearCache() {
  * Authentication API
  */
 export const authAPI = {
-  login: (credentials: LoginCredentials) =>
+  login: (credentials: LoginCredentials): Promise<AuthResponse> =>
     apiRequest<AuthResponse>('/auth/login', {
       method: 'POST',
       body: JSON.stringify(credentials),
     }),
 
-  getProfile: () => apiRequest('/auth/me', { method: 'GET' }),
+  getProfile: (): Promise<User> =>
+    apiRequest<User>('/auth/me', { method: 'GET' }),
 
-  logout: () => {
+  logout: (): void => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('authToken');
       localStorage.removeItem('user');
@@ -185,78 +207,86 @@ export const authAPI = {
  * Services API
  */
 export const servicesAPI = {
-  getAll: () => apiRequest('/services', { method: 'GET' }),
+  getAll: (): Promise<Service[]> =>
+    apiRequest<Service[]>('/services', { method: 'GET' }),
 
-  getOne: (id: string) => apiRequest(`/services/${id}`, { method: 'GET' }),
+  getOne: (id: string): Promise<Service> =>
+    apiRequest<Service>(`/services/${id}`, { method: 'GET' }),
 
-  getBySlug: (slug: string) => apiRequest(`/services/slug/${slug}`, { method: 'GET' }),
+  getBySlug: (slug: string): Promise<Service> =>
+    apiRequest<Service>(`/services/slug/${slug}`, { method: 'GET' }),
 
-  create: (data: any) =>
-    apiRequest('/services', {
+  create: (data: Omit<Service, 'id' | 'createdAt' | 'updatedAt'>): Promise<Service> =>
+    apiRequest<Service>('/services', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
 
-  update: (id: string, data: any) =>
-    apiRequest(`/services/${id}`, {
+  update: (id: string, data: Partial<Omit<Service, 'id' | 'createdAt' | 'updatedAt'>>): Promise<Service> =>
+    apiRequest<Service>(`/services/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
     }),
 
-  delete: (id: string) =>
-    apiRequest(`/services/${id}`, { method: 'DELETE' }),
+  delete: (id: string): Promise<void> =>
+    apiRequest<void>(`/services/${id}`, { method: 'DELETE' }),
 };
 
 /**
  * Tours API
  */
 export const toursAPI = {
-  getAll: () => apiRequest('/tours', { method: 'GET' }),
+  getAll: (): Promise<Tour[]> =>
+    apiRequest<Tour[]>('/tours', { method: 'GET' }),
 
-  getOne: (id: string) => apiRequest(`/tours/${id}`, { method: 'GET' }),
+  getOne: (id: string): Promise<Tour> =>
+    apiRequest<Tour>(`/tours/${id}`, { method: 'GET' }),
 
-  getBySlug: (slug: string) => apiRequest(`/tours/slug/${slug}`, { method: 'GET' }),
+  getBySlug: (slug: string): Promise<Tour> =>
+    apiRequest<Tour>(`/tours/slug/${slug}`, { method: 'GET' }),
 
-  create: (data: any) =>
-    apiRequest('/tours', {
+  create: (data: Omit<Tour, 'id' | 'createdAt' | 'updatedAt'>): Promise<Tour> =>
+    apiRequest<Tour>('/tours', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
 
-  update: (id: string, data: any) =>
-    apiRequest(`/tours/${id}`, {
+  update: (id: string, data: Partial<Omit<Tour, 'id' | 'createdAt' | 'updatedAt'>>): Promise<Tour> =>
+    apiRequest<Tour>(`/tours/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
     }),
 
-  delete: (id: string) =>
-    apiRequest(`/tours/${id}`, { method: 'DELETE' }),
+  delete: (id: string): Promise<void> =>
+    apiRequest<void>(`/tours/${id}`, { method: 'DELETE' }),
 };
 
 /**
  * Bookings API
  */
 export const bookingsAPI = {
-  getAll: () => apiRequest('/bookings', { method: 'GET' }),
+  getAll: (): Promise<Booking[]> =>
+    apiRequest<Booking[]>('/bookings', { method: 'GET' }),
 
-  getOne: (id: string) => apiRequest(`/bookings/${id}`, { method: 'GET' }),
+  getOne: (id: string): Promise<Booking> =>
+    apiRequest<Booking>(`/bookings/${id}`, { method: 'GET' }),
 
-  getByReference: (referenceNo: string) =>
-    apiRequest(`/bookings/reference/${referenceNo}`, { method: 'GET' }),
+  getByReference: (referenceNo: string): Promise<Booking> =>
+    apiRequest<Booking>(`/bookings/reference/${referenceNo}`, { method: 'GET' }),
 
-  create: (data: any) =>
-    apiRequest('/bookings', {
+  create: (data: CreateBookingRequest): Promise<Booking> =>
+    apiRequest<Booking>('/bookings', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
 
-  updateStatus: (id: string, status: string) =>
-    apiRequest(`/bookings/${id}/status?status=${status}`, {
+  updateStatus: (id: string, status: BookingStatus): Promise<Booking> =>
+    apiRequest<Booking>(`/bookings/${id}/status?status=${status}`, {
       method: 'PATCH',
     }),
 
-  delete: (id: string) =>
-    apiRequest(`/bookings/${id}`, { method: 'DELETE' }),
+  delete: (id: string): Promise<void> =>
+    apiRequest<void>(`/bookings/${id}`, { method: 'DELETE' }),
 };
 
 /**
@@ -266,87 +296,96 @@ export const blogAPI = {
   /**
    * Get published posts only (for public blog page)
    */
-  getPublic: () => apiRequest('/blog/public', { method: 'GET' }),
+  getPublic: (): Promise<BlogPost[]> =>
+    apiRequest<BlogPost[]>('/blog/public', { method: 'GET' }),
 
   /**
    * Get all posts including drafts (for admin)
    */
-  getAdmin: () => apiRequest('/blog/admin', { method: 'GET' }),
+  getAdmin: (): Promise<BlogPost[]> =>
+    apiRequest<BlogPost[]>('/blog/admin', { method: 'GET' }),
 
   /**
    * Deprecated: Use getPublic() or getAdmin() instead
    */
-  getAll: () => apiRequest('/blog', { method: 'GET' }),
+  getAll: (): Promise<BlogPost[]> =>
+    apiRequest<BlogPost[]>('/blog', { method: 'GET' }),
 
-  getOne: (id: string) => apiRequest(`/blog/${id}`, { method: 'GET' }),
+  getOne: (id: string): Promise<BlogPost> =>
+    apiRequest<BlogPost>(`/blog/${id}`, { method: 'GET' }),
 
-  getBySlug: (slug: string) => apiRequest(`/blog/slug/${slug}`, { method: 'GET' }),
+  getBySlug: (slug: string): Promise<BlogPost> =>
+    apiRequest<BlogPost>(`/blog/slug/${slug}`, { method: 'GET' }),
 
-  create: (data: any) =>
-    apiRequest('/blog', {
+  create: (data: Omit<BlogPost, 'id' | 'createdAt' | 'updatedAt'>): Promise<BlogPost> =>
+    apiRequest<BlogPost>('/blog', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
 
-  update: (id: string, data: any) =>
-    apiRequest(`/blog/${id}`, {
+  update: (id: string, data: Partial<Omit<BlogPost, 'id' | 'createdAt' | 'updatedAt'>>): Promise<BlogPost> =>
+    apiRequest<BlogPost>(`/blog/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
     }),
 
-  delete: (id: string) =>
-    apiRequest(`/blog/${id}`, { method: 'DELETE' }),
+  delete: (id: string): Promise<void> =>
+    apiRequest<void>(`/blog/${id}`, { method: 'DELETE' }),
 };
 
 /**
  * Contacts API
  */
 export const contactsAPI = {
-  getAll: () => apiRequest('/contacts', { method: 'GET' }),
+  getAll: (): Promise<ContactMessage[]> =>
+    apiRequest<ContactMessage[]>('/contacts', { method: 'GET' }),
 
-  getOne: (id: string) => apiRequest(`/contacts/${id}`, { method: 'GET' }),
+  getOne: (id: string): Promise<ContactMessage> =>
+    apiRequest<ContactMessage>(`/contacts/${id}`, { method: 'GET' }),
 
-  create: (data: any) =>
-    apiRequest('/contacts', {
+  create: (data: CreateContactRequest): Promise<ContactMessage> =>
+    apiRequest<ContactMessage>('/contacts', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
 
-  markAsRead: (id: string) =>
-    apiRequest(`/contacts/${id}/read`, { method: 'PATCH' }),
+  markAsRead: (id: string): Promise<ContactMessage> =>
+    apiRequest<ContactMessage>(`/contacts/${id}/read`, { method: 'PATCH' }),
 
-  respond: (id: string, response: string) =>
-    apiRequest(`/contacts/${id}/respond`, {
+  respond: (id: string, response: string): Promise<ContactMessage> =>
+    apiRequest<ContactMessage>(`/contacts/${id}/respond`, {
       method: 'PATCH',
       body: JSON.stringify({ response }),
     }),
 
-  delete: (id: string) =>
-    apiRequest(`/contacts/${id}`, { method: 'DELETE' }),
+  delete: (id: string): Promise<void> =>
+    apiRequest<void>(`/contacts/${id}`, { method: 'DELETE' }),
 };
 
 /**
  * Users API
  */
 export const usersAPI = {
-  getAll: () => apiRequest('/users', { method: 'GET' }),
+  getAll: (): Promise<User[]> =>
+    apiRequest<User[]>('/users', { method: 'GET' }),
 
-  getOne: (id: string) => apiRequest(`/users/${id}`, { method: 'GET' }),
+  getOne: (id: string): Promise<User> =>
+    apiRequest<User>(`/users/${id}`, { method: 'GET' }),
 
-  create: (data: any) =>
-    apiRequest('/users', {
+  create: (data: Omit<User, 'id' | 'createdAt'>): Promise<User> =>
+    apiRequest<User>('/users', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
 
-  update: (id: string, data: any) =>
-    apiRequest(`/users/${id}`, {
+  update: (id: string, data: Partial<Omit<User, 'id' | 'createdAt'>>): Promise<User> =>
+    apiRequest<User>(`/users/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
     }),
 
-  delete: (id: string) =>
-    apiRequest(`/users/${id}`, { method: 'DELETE' }),
+  delete: (id: string): Promise<void> =>
+    apiRequest<void>(`/users/${id}`, { method: 'DELETE' }),
 };
 
 /**

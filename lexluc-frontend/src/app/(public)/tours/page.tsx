@@ -42,7 +42,7 @@ export default function ToursPage() {
 
           {!loading && !error && tours.length > 0 && (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {tours.map((tour: any) => (
+              {tours.map((tour: typeof tours[0]) => (
                 <Card key={tour.id} className="overflow-hidden flex flex-col">
                   {tour.image ? (
                     <img

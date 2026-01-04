@@ -2,6 +2,7 @@
 
 import { useFetch, useMutation, useToast } from '@/lib/hooks';
 import { contactsAPI } from '@/lib/api';
+import { ContactMessage } from '@/types';
 import { Card, Badge, Button, Textarea, Modal } from '@/components/common/UI';
 import { useState } from 'react';
 
@@ -10,16 +11,16 @@ export default function AdminContactsPage() {
   const contacts = Array.isArray(contactsData) ? contactsData : [];
   const { success, error: showError } = useToast();
 
-  const [selectedContact, setSelectedContact] = useState<any>(null);
+  const [selectedContact, setSelectedContact] = useState<ContactMessage | null>(null);
   const [showReplyModal, setShowReplyModal] = useState(false);
   const [replyText, setReplyText] = useState('');
 
   type ReplyPayload = {
-  response: string;
+    response: string;
   };
 
   const replyMutation = useMutation((data: ReplyPayload) =>
-  contactsAPI.respond(selectedContact.id, data.response)
+    selectedContact ? contactsAPI.respond(selectedContact.id, data.response) : Promise.reject('No contact selected')
   );
 
 

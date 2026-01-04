@@ -2,6 +2,7 @@
 
 import { useFetch, useToast } from '@/lib/hooks';
 import { bookingsAPI } from '@/lib/api';
+import { Booking, BookingStatus } from '@/types';
 import { Table, Badge, Button, Card } from '@/components/common/UI';
 import { useState } from 'react';
 
@@ -10,8 +11,8 @@ export default function AdminBookingsPage() {
   const bookings = Array.isArray(bookingsData) ? bookingsData : [];
   const { success, error: showError } = useToast();
 
-  const [selectedBooking, setSelectedBooking] = useState<any>(null);
-  const [newStatus, setNewStatus] = useState('');
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [newStatus, setNewStatus] = useState<BookingStatus | ''>('');
   const [statusUpdating, setStatusUpdating] = useState(false);
 
   const handleStatusChange = async (id: string) => {
@@ -127,7 +128,7 @@ export default function AdminBookingsPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Update Status</label>
                 <select
                   value={newStatus}
-                  onChange={(e) => setNewStatus(e.target.value)}
+                  onChange={(e) => setNewStatus(e.target.value as BookingStatus | '')}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">Select Status</option>
