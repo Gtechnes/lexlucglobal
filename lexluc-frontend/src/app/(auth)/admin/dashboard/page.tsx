@@ -2,15 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { servicesAPI, toursAPI, bookingsAPI, contactsAPI, adminAPI } from '@/lib/api';
-
-interface DashboardStats {
-  users: number;
-  services: number;
-  tours: number;
-  bookings: number;
-  posts: number;
-  unreadContacts: number;
-}
+import { DashboardStats } from '@/types';
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats>({

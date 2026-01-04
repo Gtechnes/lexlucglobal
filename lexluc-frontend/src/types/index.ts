@@ -140,3 +140,13 @@ export interface CreateContactRequest {
   subject: string;
   message: string;
 }
+
+// Dashboard Stats
+export interface DashboardStats {
+  users: number;
+  services: number;
+  tours: number;
+  bookings: number;
+  posts: number;
+  unreadContacts: number;
+}

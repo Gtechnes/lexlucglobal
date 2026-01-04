@@ -1,4 +1,4 @@
-import { AuthResponse, LoginCredentials } from '@/types';
+import { AuthResponse, LoginCredentials, DashboardStats } from '@/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
 
@@ -353,5 +353,6 @@ export const usersAPI = {
  * Admin API
  */
 export const adminAPI = {
-  getStats: () => apiRequest('/admin/stats', { method: 'GET' }),
+  getStats: (): Promise<DashboardStats> =>
+    apiRequest<DashboardStats>('/admin/stats', { method: 'GET' }),
 };
