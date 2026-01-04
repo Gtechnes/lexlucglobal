@@ -227,10 +227,13 @@ export default function AdminBlogPage() {
 
           <ImageUpload
             label="Featured Image"
-            folder="lexluc/blog"
+            type="blog"
             preview={formData.image}
-            onUpload={(url) => setFormData({ ...formData, image: url })}
+            onUpload={(url) =>
+           setFormData({ ...formData, image: url })
+            }
           />
+
 
           <Textarea
             label="Excerpt"
